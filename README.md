@@ -88,10 +88,11 @@ One of the future goals is to compile this BitTorrent client to WebAssembly (Was
 - [ ] Adapt network and peer management for WebAssembly (Wasm).
 - [ ] Implement browser-based UI for downloading torrents.
 - [ ] Test WebAssembly builds across major browsers.
+- [ ] Download torrent files using `magnet links`.
 
 ## Contributing
 
-Contributions are welcome! If you have ideas for new features or improvements, feel free to fork the repository and submit a pull request. Make sure to write unit tests for any new functionality.
+Contributions are welcome! If you have ideas for new features or improvements, feel free to fork the repository and submit a pull request.
 
 ## License
 
