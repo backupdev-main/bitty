@@ -42,23 +42,10 @@ func main() {
 		PieceHashes: bct.PieceHashes,
 	}
 
-	buf, err := tf.Download()
+	file, err := tf.Download()
 
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Open the file for writing (create if it doesn't exist, truncate if it does)
-	file, err := os.Create(*dstPath)
-	if err != nil {
-		log.Fatalf("Error creating file: %v\n", err)
-
-	}
-
 	defer file.Close()
-
-	_, err = file.Write(buf)
-	if err != nil {
-		log.Fatalf("Error writing to file: %v\n", err)
-	}
-
 }

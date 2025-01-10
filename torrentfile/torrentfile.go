@@ -2,9 +2,11 @@ package torrentfile
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/peterkwesiansah/bitty/bitfield"
@@ -145,10 +147,12 @@ func (t *Torrent) initDownloadWorker(peer peers.Peer, resultsQueue chan<- result
 	return nil
 }
 
-func (t *Torrent) Download() ([]byte, error) {
+func (t *Torrent) Download() (*os.File, error) {
 
 	activePeersCount := len(t.Peers)
 	donePieces := 0
+	dstPath := flag.String("dst", "", "Destination path for the downloaded torrent content")
+	flag.Parse()
 
 	activePeers := make(chan peers.Peer, activePeersCount)
 	errors := make(chan error, activePeersCount)
@@ -156,7 +160,20 @@ func (t *Torrent) Download() ([]byte, error) {
 	resultsQueue := make(chan resultPiece, len(t.PieceHashes))
 	downloadCompleted := make(chan bool)
 
-	fileBuf := make([]byte, t.Length)
+	// Open the file for writing (create if it doesn't exist, truncate if it does)
+	file, err := os.Create(*dstPath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file: %w", err)
+
+	}
+	//seek "pre-allocates" before we actually start to write in it
+	_, err = file.Seek((int64(t.Length))-1, 0)
+	if err != nil {
+		return nil, fmt.Errorf("error creating sparse file: %w", err)
+	}
+
+	//TODO: Don't load the entire file into memory first before writing to disk
+	//fileBuf := make([]byte, t.Length)
 
 	//creating queue of workPieces
 	for index, pieceHash := range t.PieceHashes {
@@ -165,7 +182,6 @@ func (t *Torrent) Download() ([]byte, error) {
 
 	for _, activePeer := range t.Peers {
 		go func(peer peers.Peer) {
-
 			//returns when there's nothing more to download in other words workQueue is empty or error
 			err := t.initDownloadWorker(peer, resultsQueue, workQueue)
 			if err != nil {
@@ -195,7 +211,10 @@ func (t *Torrent) Download() ([]byte, error) {
 
 	for resultPiece := range resultsQueue {
 		begin := resultPiece.pieceIndex * resultPiece.length
-		copy(fileBuf[begin:], resultPiece.buf)
+		_, err := file.WriteAt(resultPiece.buf, int64(begin))
+		if err != nil {
+			return nil, fmt.Errorf("error creating sparse file: %w", err)
+		}
 
 		donePieces++
 
@@ -205,8 +224,7 @@ func (t *Torrent) Download() ([]byte, error) {
 
 		percentComplete := float64(donePieces) / float64(len(t.PieceHashes)) * 100
 		log.Printf("%.2f%% complete\n", percentComplete)
-
 	}
-	return fileBuf, nil
+	return file, nil
 
 }
