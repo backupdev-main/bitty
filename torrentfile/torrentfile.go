@@ -2,7 +2,6 @@ package torrentfile
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -134,7 +133,6 @@ func (t *Torrent) initDownloadWorker(peer peers.Peer, resultsQueue chan<- result
 			workQueue <- wp
 			continue
 		}
-
 		//send to piece to  resultPiece chan
 		rp := resultPiece{
 			pieceIndex: wp.PieceIndex,
@@ -147,12 +145,10 @@ func (t *Torrent) initDownloadWorker(peer peers.Peer, resultsQueue chan<- result
 	return nil
 }
 
-func (t *Torrent) Download() (*os.File, error) {
+func (t *Torrent) Download(dstPath string) (*os.File, error) {
 
 	activePeersCount := len(t.Peers)
 	donePieces := 0
-	dstPath := flag.String("dst", "", "Destination path for the downloaded torrent content")
-	flag.Parse()
 
 	activePeers := make(chan peers.Peer, activePeersCount)
 	errors := make(chan error, activePeersCount)
@@ -161,7 +157,7 @@ func (t *Torrent) Download() (*os.File, error) {
 	downloadCompleted := make(chan bool)
 
 	// Open the file for writing (create if it doesn't exist, truncate if it does)
-	file, err := os.Create(*dstPath)
+	file, err := os.Create(dstPath)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
 

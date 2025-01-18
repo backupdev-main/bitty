@@ -42,7 +42,7 @@ func main() {
 		PieceHashes: bct.PieceHashes,
 	}
 
-	file, err := tf.Download()
+	file, err := tf.Download(*dstPath)
 
 	if err != nil {
 		log.Fatal(err)
